@@ -18,7 +18,7 @@ import buildStateFacets from "./buildFacets";
 
 const transformSearchUIStateToQuery = state => {
     let request = {searchTerm: state.searchTerm};
-    state.filters.forEach(filter => request[filter.field] = filter.values.map(value=>value.name).join(","))
+    state.filters.forEach(filter => request[filter.field] = [].concat(filter.values.map(value=>value.name)))
     console.log("REQUEST")
     console.log(request)
     return request

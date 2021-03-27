@@ -1,30 +1,54 @@
-import {SearchProvider,SearchBox,Results,WithSearch,Paging,ErrorBoundary,Sorting,Facet,ResultsPerPage,PagingInfo} from "@elastic/react-search-ui";
-import { Layout, SingleSelectFacet,BooleanFacet,SingleLinksFacet } from "@elastic/react-search-ui-views";
+import {
+    SearchProvider,
+    SearchBox,
+    Results,
+    WithSearch,
+    Paging,
+    ErrorBoundary,
+    Sorting,
+    Facet,
+    ResultsPerPage,
+    PagingInfo
+} from "@elastic/react-search-ui";
+import {Layout, SingleSelectFacet, BooleanFacet, SingleLinksFacet} from "@elastic/react-search-ui-views";
 import React, {Component} from "react";
 import axios from 'axios';
 import "@elastic/react-search-ui-views/lib/styles/styles.css";
 import buildStateFacets from "./buildFacets";
 
 const transformSearchUIStateToQuery = state => {
-    return {keystroke:state.searchTerm,labels:""}
+    let request = {searchTerm: state.searchTerm};
+    state.filters.forEach(filter => request[filter.field] = filter.values.map(value=>value.name).join(","))
+    console.log("REQUEST")
+    console.log(request)
+    return request
 }
 
-const callSomeOtherService = async query =>{
-    const resp = await axios.post(`http://localhost:5000/search/query`,query)
+const callSomeOtherService = async query => {
+    const resp = await axios.post(`http://localhost:5000/search/query`, query)
     console.log(resp.data)
     return resp.data
 }
 
-const transformOtherServiceResponseToSearchUIState = response =>{
+const transformOtherServiceResponseToSearchUIState = response => {
     console.log("setting state: ")
     console.log(response.searchResults)
-    let results = response.searchResults.hits.hits.map((x,i)=>{return {paragraph:{snippet:x.highlight.paragraph[0]}, id:{raw: x._id}, labels:{snippet:x._source.labels.join()}}});
+    let results = response.hits.hits.map((x, i) => {
+        return {
+            paragraph: {snippet: x.highlight.paragraph[0]},
+            id: {raw: x._id},
+            labels: {snippet: x._source.labels.join()}
+        }
+    });
     console.log(results)
-    const facets = buildStateFacets(response.searchResults.aggregations);
-    return {results: results, autocompletedResults: results,...(facets && { facets })}
+    const facets = buildStateFacets(response.aggregations);
+    console.log("FACETS")
+    console.log(facets)
+    console.log({results: results, autocompletedResults: results, facets: facets})
+    return {results: results, autocompletedResults: results, facets: facets}
 };
 
-class SearchService extends Component{
+class SearchService extends Component {
 
     render() {
         return (
@@ -49,8 +73,8 @@ class SearchService extends Component{
                 }}
             >
 
-                <WithSearch mapContextToProps={({ wasSearched }) => ({ wasSearched })}>
-                    {({ wasSearched }) => (
+                <WithSearch mapContextToProps={({wasSearched}) => ({wasSearched})}>
+                    {({wasSearched}) => (
                         <div className="App">
                             <ErrorBoundary>
                                 <Layout
@@ -78,7 +102,7 @@ class SearchService extends Component{
                                                 </div>
                                             )}
                                             <Facet
-                                                field="facets"
+                                                field="labels"
                                                 label="Labels"
                                                 filterType="any"
                                             />
@@ -93,18 +117,18 @@ class SearchService extends Component{
                                     }
                                     bodyHeader={
                                         <React.Fragment>
-                                            {wasSearched && <PagingInfo />}
-                                            {wasSearched && <ResultsPerPage />}
+                                            {wasSearched && <PagingInfo/>}
+                                            {wasSearched && <ResultsPerPage/>}
                                         </React.Fragment>
                                     }
-                                    bodyFooter={<Paging />}
+                                    bodyFooter={<Paging/>}
                                 />
                             </ErrorBoundary>
                         </div>
                     )}
                 </WithSearch>
             </SearchProvider>
-        </div>
+            </div>
         );
     }
 }

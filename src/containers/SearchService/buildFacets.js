@@ -45,11 +45,8 @@ function getRangeFacet(aggregations, fieldName) {
 }
 
 export default function buildStateFacets(aggregations) {
-    const facetsField = getRangeFacet(aggregations, "facets");
-
-    const facets = {
-        ...(facetsField && { facets: facetsField })
-    };
+    let facets = {};
+    facets["labels"] = getRangeFacet(aggregations, "labels");
 
     if (Object.keys(facets).length > 0) {
         return facets;
